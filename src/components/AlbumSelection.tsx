@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Album, Photo } from '../types';
 import { MOCK_ALBUMS } from '../constants';
-import { Image as ImageIcon, Upload, Loader2, LogOut } from 'lucide-react';
+import { Image as ImageIcon, Upload, Loader2, LogOut, AlertCircle } from 'lucide-react';
 import { fetchAlbums, fetchPhotosForAlbum } from '../services/googlePhotosService';
 
 interface AlbumSelectionProps {
@@ -13,17 +13,26 @@ const AlbumSelection: React.FC<AlbumSelectionProps> = ({ onSelectAlbum, accessTo
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Load Albums on Mount
   useEffect(() => {
     const loadAlbums = async () => {
         if (accessToken) {
             setIsLoading(true);
-            const googleAlbums = await fetchAlbums(accessToken);
-            setAlbums(googleAlbums);
-            setIsLoading(false);
+            setError(null);
+            try {
+                const googleAlbums = await fetchAlbums(accessToken);
+                setAlbums(googleAlbums);
+            } catch (err: any) {
+                console.error(err);
+                setError(err.message || "Failed to load albums");
+                // Don't fallback to mocks on error, show the error so they can fix it
+            } finally {
+                setIsLoading(false);
+            }
         } else {
-            // Fallback to mocks if no token (dev mode or error)
+            // Fallback to mocks if no token (dev mode or explicitly demo)
             setAlbums(MOCK_ALBUMS);
         }
     };
@@ -34,11 +43,19 @@ const AlbumSelection: React.FC<AlbumSelectionProps> = ({ onSelectAlbum, accessTo
     // If it's a Google Album (has no photos loaded yet)
     if (accessToken && album.photos.length === 0) {
         setIsLoadingPhotos(true);
-        const photos = await fetchPhotosForAlbum(accessToken, album.id);
-        setIsLoadingPhotos(false);
-        
-        const fullAlbum = { ...album, photos };
-        onSelectAlbum(fullAlbum);
+        try {
+            const photos = await fetchPhotosForAlbum(accessToken, album.id);
+            if (photos.length === 0) {
+                alert("No photos found in this album.");
+            } else {
+                const fullAlbum = { ...album, photos };
+                onSelectAlbum(fullAlbum);
+            }
+        } catch (e) {
+            alert("Failed to load photos for this album.");
+        } finally {
+            setIsLoadingPhotos(false);
+        }
     } else {
         // Local or Mock album
         onSelectAlbum(album);
@@ -103,6 +120,18 @@ const AlbumSelection: React.FC<AlbumSelectionProps> = ({ onSelectAlbum, accessTo
                 <Loader2 className="w-8 h-8 animate-spin mb-2" />
                 <p>Fetching albums...</p>
              </div>
+        ) : error ? (
+             <div className="flex flex-col items-center justify-center h-64 text-neutral-400 px-8 text-center">
+                <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
+                <p className="text-lg font-medium text-white mb-2">Connection Error</p>
+                <p className="text-sm mb-4">{error}</p>
+                <button 
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-neutral-800 rounded-lg hover:bg-neutral-700 transition-colors text-sm"
+                >
+                    Try Logging Out
+                </button>
+             </div>
         ) : (
             <div className="grid grid-cols-2 gap-4 pb-24">
                 {/* Upload Button */}
@@ -136,7 +165,7 @@ const AlbumSelection: React.FC<AlbumSelectionProps> = ({ onSelectAlbum, accessTo
                     <h3 className="font-bold text-white truncate w-full">{album.title}</h3>
                     <div className="flex items-center gap-1 text-xs text-neutral-400 mt-1">
                         <ImageIcon className="w-3 h-3" />
-                        <span>{album.photoCount} items</span>
+                        <span>{album.photoCount === 0 ? 'Stream' : `${album.photoCount} items`}</span>
                     </div>
                 </div>
                 </button>

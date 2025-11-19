@@ -1,0 +1,22 @@
+{
+  "short_name": "Memories",
+  "name": "Smart Memories Slideshow",
+  "icons": [
+    {
+      "src": "https://placehold.co/192x192/2563eb/ffffff.png?text=SM",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://placehold.co/512x512/2563eb/ffffff.png?text=Memories",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "scope": ".",
+  "background_color": "#000000",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "orientation": "any"
+}

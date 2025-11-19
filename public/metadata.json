@@ -1,0 +1,5 @@
+{
+  "name": "Smart Memories Slideshow",
+  "description": "An intelligent photo slideshow app that simulates a Google Photos experience. It features album selection and customizable duration.",
+  "requestFramePermissions": []
+}

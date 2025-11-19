@@ -13,6 +13,7 @@ export const getAuthUrl = (clientId: string): string => {
     response_type: 'token',
     scope: SCOPE,
     include_granted_scopes: 'true',
+    prompt: 'consent', // Forces account selection/consent every time
     state: 'pass-through-value'
   });
 
